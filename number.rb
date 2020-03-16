@@ -1,8 +1,8 @@
 # Number Proof Generator
 
 module AST
-  OPS = ['+', '-', '*']
-  PREC = {'+' => 10, '-' => 10, '*' => 20}
+  OPS = ['+', '-', '*', '/']
+  PREC = {'+' => 10, '-' => 10, '*' => 20, '/' => 20}
 
   class Node
     attr_reader :lhs, :op, :rhs
@@ -14,7 +14,18 @@ module AST
     end
 
     def evaluate
-      lhs.evaluate.send(op.to_sym, rhs.evaluate)
+      l = @lhs.evaluate
+      r = @rhs.evaluate
+      case @op
+      when '+'
+        l + r
+      when '-'
+        l - r
+      when '*'
+        l * r
+      when '/'
+        l.to_f / r
+      end
     end
 
     def to_s
@@ -71,21 +82,29 @@ def combnum(numbers, groups)
   end
 end
 
-numbers = ['1', '9', '7', '7', '0', '3', '1', '8']
-
-results = {}
-for i in 1..(numbers.size)
-  combnum numbers, i do |n|
-    enumast n, AST::OPS do |ast|
-      res = ast.evaluate
-      s  = ast.to_s
-      if res >= 0 
-        if results[res].nil? || results[res].size > s.size
-          results[res] = s
+def npgen(numbers, results)
+  for i in 1..(numbers.size)
+    combnum numbers, i do |n|
+      enumast n, AST::OPS do |ast|
+        res = ast.evaluate
+        if res.finite? and res.to_i == res
+          res = res.to_i
+          s  = ast.to_s
+          if res >= 0 
+            if results[res].nil? || results[res].size > s.size
+              results[res] = s
+            end
+          end
         end
       end
     end
   end
+end
+
+results = {}
+for i in 1..9
+  STDERR.puts i
+  npgen(['9']*i, results)
 end
 
 sorted = []
